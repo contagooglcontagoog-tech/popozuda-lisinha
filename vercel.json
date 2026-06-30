@@ -1,3 +1,109 @@
 {
-  "version": 2
+  "version": 2,
+  "routes": [
+    {
+      "src": "/api/criar-pagamento",
+      "dest": "/api/criar-pagamento.js"
+    },
+    {
+      "src": "/api/status-pagamento",
+      "dest": "/api/status-pagamento.js"
+    },
+    {
+      "src": "/api/webhook-dice",
+      "dest": "/api/webhook-dice.js"
+    },
+    {
+      "src": "/products/poppzuda-cream",
+      "dest": "/products/poppzuda-cream/index.html"
+    },
+    {
+      "src": "/products/poppzuda-cream/",
+      "dest": "/products/poppzuda-cream/index.html"
+    },
+    {
+      "src": "/products/poppzuda-cream\\?.*",
+      "dest": "/products/poppzuda-cream/index.html"
+    },
+    {
+      "src": "/products/lisinha",
+      "dest": "/products/lisinha/index.html"
+    },
+    {
+      "src": "/products/lisinha/",
+      "dest": "/products/lisinha/index.html"
+    },
+    {
+      "src": "/products/lisinha\\?.*",
+      "dest": "/products/lisinha/index.html"
+    },
+    {
+      "src": "/products/spray-popozuda",
+      "dest": "/products/spray-popozuda/index.html"
+    },
+    {
+      "src": "/products/spray-popozuda/",
+      "dest": "/products/spray-popozuda/index.html"
+    },
+    {
+      "src": "/products/spray-popozuda\\?.*",
+      "dest": "/products/spray-popozuda/index.html"
+    },
+    {
+      "src": "/products/body-splash-sedutora",
+      "dest": "/products/body-splash-sedutora/index.html"
+    },
+    {
+      "src": "/products/body-splash-sedutora/",
+      "dest": "/products/body-splash-sedutora/index.html"
+    },
+    {
+      "src": "/products/body-splash-sedutora\\?.*",
+      "dest": "/products/body-splash-sedutora/index.html"
+    },
+    {
+      "src": "/products/combo-popozuda",
+      "dest": "/products/combo-popozuda/index.html"
+    },
+    {
+      "src": "/products/combo-popozuda/",
+      "dest": "/products/combo-popozuda/index.html"
+    },
+    {
+      "src": "/products/combo-popozuda\\?.*",
+      "dest": "/products/combo-popozuda/index.html"
+    },
+    {
+      "src": "/products/creme-e-spray-popozuda",
+      "dest": "/products/creme-e-spray-popozuda/index.html"
+    },
+    {
+      "src": "/products/creme-e-spray-popozuda/",
+      "dest": "/products/creme-e-spray-popozuda/index.html"
+    },
+    {
+      "src": "/products/creme-e-spray-popozuda\\?.*",
+      "dest": "/products/creme-e-spray-popozuda/index.html"
+    },
+    {
+      "src": "/products/creme-spray-e-lisinha",
+      "dest": "/products/creme-spray-e-lisinha/index.html"
+    },
+    {
+      "src": "/products/creme-spray-e-lisinha/",
+      "dest": "/products/creme-spray-e-lisinha/index.html"
+    },
+    {
+      "src": "/products/creme-spray-e-lisinha\\?.*",
+      "dest": "/products/creme-spray-e-lisinha/index.html"
+    },
+    {
+      "src": "/dice-checkout.js",
+      "dest": "/dice-checkout.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
 }

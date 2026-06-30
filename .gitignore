@@ -14,3 +14,4 @@ services/
 web-pixels/
 web-pixels@*/
 _external/
+products/*/node_modules/
