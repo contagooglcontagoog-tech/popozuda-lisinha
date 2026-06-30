@@ -915,24 +915,36 @@
     if (window.location.pathname.indexOf('/products/lisinha') !== 0) return;
     var bars = document.querySelectorAll('.kaching-bundles__bar');
     if (!bars.length) return;
-    var prices = [
-      { price: 'R$ 39,90' },
-      { price: 'R$ 79,90' },
-      { price: 'R$ 129,90' },
-    ];
+    var prices = ['R$ 39,90', 'R$ 79,90', 'R$ 129,90'];
+
     bars.forEach(function (bar, i) {
-      var d = prices[i];
-      if (!d) return;
-      /* Preço principal */
-      var priceEl = bar.querySelector('[data-a11y-label="system.price"]');
+      var price = prices[i];
+      if (!price) return;
+
+      /* Seletores de preço que o Kaching usa (ordem de prioridade) */
+      var priceEl = bar.querySelector('.kaching-bundles__bar-price')
+                 || bar.querySelector('[data-a11y-label="system.price"]');
+
       if (priceEl) {
-        var tn = priceEl.firstChild;
-        if (tn && tn.nodeType === 3) tn.textContent = d.price;
-        else priceEl.insertBefore(document.createTextNode(d.price), priceEl.firstChild);
+        /* TreeWalker: substitui o primeiro text node que contenha "R$" */
+        var walker = document.createTreeWalker(priceEl, NodeFilter.SHOW_TEXT, null, false);
+        var node, replaced = false;
+        while ((node = walker.nextNode())) {
+          if (/R\$/.test(node.textContent)) {
+            node.textContent = price;
+            replaced = true;
+            break;
+          }
+        }
+        /* Fallback: força textContent se não achou nenhum text node com "R$" */
+        if (!replaced) priceEl.insertBefore(document.createTextNode(price), priceEl.firstChild);
       }
-      /* Remove preço riscado (de original da Shopify) */
-      var origEl = bar.querySelector('[data-a11y-label="system.original_price"]');
-      if (origEl) origEl.style.display = 'none';
+
+      /* Oculta preço riscado (full-price = compare-at original) */
+      ['.kaching-bundles__bar-full-price', '[data-a11y-label="system.original_price"]'].forEach(function (sel) {
+        var el = bar.querySelector(sel);
+        if (el) el.style.display = 'none';
+      });
     });
   }
 
