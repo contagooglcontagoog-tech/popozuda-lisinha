@@ -16,6 +16,17 @@
     '48997322064099': { nome: 'Creme, Spray e Lisinha', preco: 269.90, img: 'https://popozuda.com.br/cdn/shop/files/Creme_ef5f5c0e-822b-4207-ab06-fdedad93aa9c.webp' },
   };
 
+  /* ── Mapa slug → variantId (para links /products/slug) ── */
+  var SLUG_MAP = {
+    'poppzuda-cream':        '48961856504035',
+    'lisinha':               '48843070963939',
+    'spray-popozuda':        '48843070537955',
+    'body-splash-sedutora':  '48843071652067',
+    'combo-popozuda':        '48997600657635',
+    'creme-e-spray-popozuda':'48997255151843',
+    'creme-spray-e-lisinha': '48997322064099',
+  };
+
   var FRETE = 0; /* Popozuda oferece frete grátis */
   var COR   = '#9d123f';
 
@@ -372,6 +383,29 @@
       var link = e.target.closest('a[href]');
       if (link) {
         var href = link.getAttribute('href') || '';
+
+        /* intercepta /products/slug — "Comprar agora" nos banners */
+        if (href.indexOf('/products/') === 0) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          /* extrai variantId da URL ou via slug map */
+          var variantId = null;
+          var qm = href.indexOf('?variant=');
+          if (qm !== -1) {
+            variantId = href.slice(qm + 9).split('&')[0];
+          } else {
+            var slug = href.replace('/products/', '').split('?')[0];
+            variantId = SLUG_MAP[slug] || null;
+          }
+          if (variantId && PRODUTOS[variantId]) {
+            var prod = PRODUTOS[variantId];
+            pzAdicionarAoCarrinho(variantId, prod.nome, prod.preco);
+            /* abre checkout direto — comportamento "Comprar agora" */
+            setTimeout(function () { pzAbrirModal(); }, 120);
+          }
+          return;
+        }
+
         if (href === '/checkout' || href === '/cart' || href.indexOf('/checkout') === 0) {
           e.preventDefault();
           if (cart.length > 0) pzAbrirDrawer();
