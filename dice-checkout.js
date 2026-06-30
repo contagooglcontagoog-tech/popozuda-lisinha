@@ -2,6 +2,29 @@
  * Popozuda × Dice — Checkout PIX
  * Intercepta o carrinho Shopify e redireciona para pagamento Dice.
  */
+
+/* ── Bloqueia Doran SDK antes dos scripts defer rodarem ────────────────────
+   drv-sdk.js é defer e checa window.$svDoranInit.sdkURL para carregar drv-app.js
+   (que recria os círculos em 3 linhas). Nosso script inline roda primeiro.  */
+(function () {
+  var doran = window.$svDoranInit;
+  if (doran) {
+    doran.sdkURL  = undefined;
+    doran.widgets = [];
+  }
+  /* Intercepta atribuições futuras de sdkURL (bloco Shopify que roda depois) */
+  try {
+    Object.defineProperty(window, '$svDoranInit', {
+      get: function () { return doran; },
+      set: function (v) {
+        if (v) { v.sdkURL = undefined; v.widgets = []; }
+        doran = v;
+      },
+      configurable: true,
+    });
+  } catch (_) {}
+})();
+
 (function () {
   'use strict';
 
@@ -181,12 +204,13 @@
       '.image-zoom-reveal .media__image[src] { animation: pz-reveal 0.01s 2s ease forwards; }',
       '.media__image.loading[src]:not(svg) { animation: pz-reveal 0.01s 2s ease forwards; }',
 
-      /* ── Doran Shoppable Videos: SDK cria 15 slides (5 + clones loop) que quebram em 3 linhas ── */
-      /* Causa: drv-swiper-slide não recebe flex-shrink:0 (CSS deles só cobre .swiper-slide) */
-      /* e o container outer não tem overflow:hidden porque a classe é drv-swiper, não swiper */
-      '.drv-swiper-virtual { overflow:hidden !important; }',
-      '.drv-swiper-virtual > .drv-swiper-wrapper { flex-wrap:nowrap !important; }',
-      '.drv-swiper-slide { flex-shrink:0 !important; }',
+      /* ── Doran Shoppable Videos: exibe HTML capturado como linha horizontal rolável ── */
+      /* SDK bloqueado — o HTML capturado tem slides como divs em bloco; forçamos flex row */
+      '.drv-stories-wrapper { overflow:hidden !important; }',
+      '.drv-stories-wrapper .drv-swiper-wrapper { display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; overflow-x:auto !important; overflow-y:hidden !important; gap:10px !important; padding:8px 16px !important; }',
+      '.drv-swiper-slide { flex-shrink:0 !important; width:75px !important; }',
+      /* Esconde "Powered by Doran" branding */
+      '.drv-brand-mark { display:none !important; }',
     ].join('\n');
     document.head.appendChild(style);
   }
