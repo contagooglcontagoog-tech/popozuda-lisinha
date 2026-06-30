@@ -3309,7 +3309,77 @@ html,body{max-width:100%;overflow-x:hidden}
   .banner__content{padding:16px!important}
 }
 </style>
+
+<!-- Meta Pixel Code -->
+<script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+
+  var pixelId = 'SEU_PIXEL_ID_AQUI'; // SUBSTITUA AQUI PELO SEU PIXEL
+  fbq('init', pixelId);
+
+  // 1. PageView
+  fbq('track', 'PageView');
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // 2. ViewContent
+    if (window.location.pathname.includes('/products/')) {
+       fbq('track', 'ViewContent');
+    }
+
+    // 3. AddToCart
+    var addToCartButtons = document.querySelectorAll('button[name="add"], .add-to-cart-button, .quick-add__button');
+    addToCartButtons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        fbq('track', 'AddToCart');
+      });
+    });
+
+    // 4. InitiateCheckout
+    var checkoutButtons = document.querySelectorAll('a[href*="/checkout"], form[action*="/checkout"] button, button[name="checkout"], #checkout');
+    checkoutButtons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        fbq('track', 'InitiateCheckout');
+      });
+    });
+
+    // 5. Purchase
+    if (window.location.pathname.includes('thank_you') || window.location.pathname.includes('order_status') || window.location.pathname.includes('checkouts')) {
+        fbq('track', 'Purchase', { currency: 'BRL', value: 1.00 });
+    }
+  });
+</script>
+<noscript>
+  <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=SEU_PIXEL_ID_AQUI&ev=PageView&noscript=1"/>
+</noscript>
+<!-- End Meta Pixel Code -->
+
+<style>
+/* Corrige cores do popup de conta / login */
+shopify-account::part(popover),
+shopify-account::part(dialog) {
+  --color-foreground: #000000 !important;
+  --color-background: #ffffff !important;
+  --color-text: #000000 !important;
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+shopify-account::part(heading),
+shopify-account::part(text),
+shopify-account::part(link),
+shopify-account::part(button) {
+  color: #000000 !important;
+}
+</style>
+
 </head>
+
   <body class="product animations-enabled page-transitions-enabled ">
     <a class="skip-to-content-link btn btn--secondary" href="#MainContent">
   <span class="btn__text">Ir para o conteúdo</span>
@@ -5985,4 +6055,34 @@ Borrife na região desejada e espalhe suavemente se necessário. Pode ser usado 
 
 
 <div tabindex="-1" aria-hidden="true" id="web-pixels-manager-sandbox-container" data-shopify-privacy="exclude" style="height: 0px !important; width: 0px !important; position: fixed !important; visibility: hidden !important; overflow: hidden !important; z-index: -100 !important; margin: 0px !important; padding: 0px !important; border: 0px !important;"><iframe tabindex="-1" aria-hidden="true" name="web-pixel-sandbox-CUSTOM-shopify-custom-pixel-LAX-4074779awe500cddcp1e53a49dm5f7c656e" src="https://popozuda.com.br/web-pixels@4074779awe500cddcp1e53a49dm5f7c656e/custom/web-pixel-shopify-custom-pixel@0490/sandbox/modern/products/creme-e-spray-popozuda?variant=48997255151843" id="web-pixel-sandbox-CUSTOM-shopify-custom-pixel-LAX-4074779awe500cddcp1e53a49dm5f7c656e" sandbox="allow-scripts allow-forms" style="height: 0px !important; width: 0px !important; visibility: hidden !important;"></iframe></div><shop-cart-sync experiments="{}" data-instance-id="7cf39ae7-9e05-4376-95e4-5d79c1afd8c0"></shop-cart-sync><div id="tooltip-portal" aria-hidden="true" style="position: fixed; top: 0px; left: 0px; width: 100%; height: 100%; z-index: 9999; pointer-events: none;"></div><script src="/dice-checkout.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Intercept clicks on quick-add buttons on the home page and collections to redirect to product page instead
+    var quickAddForms = document.querySelectorAll('form[action^="/cart/add"]');
+    quickAddForms.forEach(function(form) {
+        var quickAddComponent = form.closest('quick-add-component');
+        if (quickAddComponent) {
+            var productUrl = quickAddComponent.getAttribute('data-product-url');
+            if (productUrl) {
+                var btn = form.querySelector('button[type="submit"], button[name="add"]');
+                if (btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Get the variant ID if available
+                        var variantInput = form.querySelector('input[name="id"]');
+                        var url = productUrl;
+                        if (variantInput && variantInput.value) {
+                            url += '?variant=' + variantInput.value;
+                        }
+                        window.location.href = url;
+                    });
+                }
+            }
+        }
+    });
+});
+</script>
+
 </body></html>
