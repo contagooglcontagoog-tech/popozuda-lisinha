@@ -1,0 +1,16 @@
+backend/.env
+backend/node_modules/
+node_modules/
+.env
+.vercel
+_wget/
+_capture_config.json
+_capture_result.json
+screenshot.png
+cdn/
+cart/
+checkouts/
+services/
+web-pixels/
+web-pixels@*/
+_external/
