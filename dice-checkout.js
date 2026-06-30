@@ -181,12 +181,12 @@
       '.image-zoom-reveal .media__image[src] { animation: pz-reveal 0.01s 2s ease forwards; }',
       '.media__image.loading[src]:not(svg) { animation: pz-reveal 0.01s 2s ease forwards; }',
 
-      /* ── Doran Shoppable Videos: Swiper loop cria 3 cópias — oculta as duplicatas ── */
-      /* O swiper do Doran não tem overflow:hidden no container, fazendo as linhas extra vazarem */
-      '[id*="doran_shoppable_videos"] .drv-swiper-wrap { overflow:hidden !important; }',
-      '[id*="doran_shoppable_videos"] .swiper-slide-duplicate { display:none !important; }',
-      /* Garante que o wrapper horizontal não quebra em múltiplas linhas */
-      '[id*="doran_shoppable_videos"] .swiper-wrapper { flex-wrap:nowrap !important; overflow:hidden !important; }',
+      /* ── Doran Shoppable Videos: SDK cria 15 slides (5 + clones loop) que quebram em 3 linhas ── */
+      /* Causa: drv-swiper-slide não recebe flex-shrink:0 (CSS deles só cobre .swiper-slide) */
+      /* e o container outer não tem overflow:hidden porque a classe é drv-swiper, não swiper */
+      '.drv-swiper-virtual { overflow:hidden !important; }',
+      '.drv-swiper-virtual > .drv-swiper-wrapper { flex-wrap:nowrap !important; }',
+      '.drv-swiper-slide { flex-shrink:0 !important; }',
     ].join('\n');
     document.head.appendChild(style);
   }
@@ -980,6 +980,7 @@
         customElements.define(tag, HTMLElement);
       }
     });
+
   }
 
   /* ── Polyfill: Kit Builder (products-bundle-selection) ── */
