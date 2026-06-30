@@ -14,6 +14,102 @@
       "dest": "/api/webhook-dice.js"
     },
     {
+      "src": "/collections/all",
+      "dest": "/collections/all/index.html"
+    },
+    {
+      "src": "/collections/all/",
+      "dest": "/collections/all/index.html"
+    },
+    {
+      "src": "/collections/all\\?.*",
+      "dest": "/collections/all/index.html"
+    },
+    {
+      "src": "/collections/combos",
+      "dest": "/collections/combos/index.html"
+    },
+    {
+      "src": "/collections/combos/",
+      "dest": "/collections/combos/index.html"
+    },
+    {
+      "src": "/collections/combos\\?.*",
+      "dest": "/collections/combos/index.html"
+    },
+    {
+      "src": "/collections/efeito-lifting",
+      "dest": "/collections/efeito-lifting/index.html"
+    },
+    {
+      "src": "/collections/efeito-lifting/",
+      "dest": "/collections/efeito-lifting/index.html"
+    },
+    {
+      "src": "/collections/efeito-lifting\\?.*",
+      "dest": "/collections/efeito-lifting/index.html"
+    },
+    {
+      "src": "/collections/lancamentos",
+      "dest": "/collections/lancamentos/index.html"
+    },
+    {
+      "src": "/collections/lancamentos/",
+      "dest": "/collections/lancamentos/index.html"
+    },
+    {
+      "src": "/collections/lancamentos\\?.*",
+      "dest": "/collections/lancamentos/index.html"
+    },
+    {
+      "src": "/collections/pagina-inicial",
+      "dest": "/collections/pagina-inicial/index.html"
+    },
+    {
+      "src": "/collections/pagina-inicial/",
+      "dest": "/collections/pagina-inicial/index.html"
+    },
+    {
+      "src": "/collections/pagina-inicial\\?.*",
+      "dest": "/collections/pagina-inicial/index.html"
+    },
+    {
+      "src": "/collections/monte-seu-kit",
+      "dest": "/collections/monte-seu-kit/index.html"
+    },
+    {
+      "src": "/collections/monte-seu-kit/",
+      "dest": "/collections/monte-seu-kit/index.html"
+    },
+    {
+      "src": "/collections/monte-seu-kit\\?.*",
+      "dest": "/collections/monte-seu-kit/index.html"
+    },
+    {
+      "src": "/collections/pele-uniforme",
+      "dest": "/collections/pele-uniforme/index.html"
+    },
+    {
+      "src": "/collections/pele-uniforme/",
+      "dest": "/collections/pele-uniforme/index.html"
+    },
+    {
+      "src": "/collections/pele-uniforme\\?.*",
+      "dest": "/collections/pele-uniforme/index.html"
+    },
+    {
+      "src": "/collections/presenca",
+      "dest": "/collections/presenca/index.html"
+    },
+    {
+      "src": "/collections/presenca/",
+      "dest": "/collections/presenca/index.html"
+    },
+    {
+      "src": "/collections/presenca\\?.*",
+      "dest": "/collections/presenca/index.html"
+    },
+    {
       "src": "/products/poppzuda-cream",
       "dest": "/products/poppzuda-cream/index.html"
     },
