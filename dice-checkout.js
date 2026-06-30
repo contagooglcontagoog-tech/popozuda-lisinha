@@ -52,7 +52,7 @@
 
   /* ── Preços especiais Lisinha (bundle 1/2/3 unidades) ── */
   var LISINHA_VARIANT = '48843070963939';
-  var LISINHA_BUNDLE  = { 1: 39.90, 2: 79.90, 3: 119.90 };
+  var LISINHA_BUNDLE  = { 1: 39.90, 2: 79.90, 3: 129.90 };
 
   var FRETE = 0; /* Popozuda oferece frete grátis */
   var COR   = '#9d123f';
@@ -397,11 +397,14 @@
       if (variantId && PRODUTOS[variantId]) {
         var nome  = PRODUTOS[variantId].nome;
         var preco = PRODUTOS[variantId].preco;
-        /* Bundle pricing para Lisinha */
+        /* Bundle pricing para Lisinha — substitui entrada anterior no carrinho */
         if (variantId === LISINHA_VARIANT) {
           var qty   = getLisinhaBundleQty();
           preco = LISINHA_BUNDLE[qty] || preco;
           if (qty > 1) nome = nome + ' (' + qty + ' un.)';
+          for (var _li = cart.length - 1; _li >= 0; _li--) {
+            if (cart[_li].variantId === LISINHA_VARIANT) cart.splice(_li, 1);
+          }
         }
         pzAdicionarAoCarrinho(variantId, nome, preco);
       }
@@ -915,7 +918,7 @@
     var prices = [
       { price: 'R$ 39,90' },
       { price: 'R$ 79,90' },
-      { price: 'R$ 119,90' },
+      { price: 'R$ 129,90' },
     ];
     bars.forEach(function (bar, i) {
       var d = prices[i];
@@ -945,21 +948,40 @@
   function initLisinhaNativePriceFix() {
     if (window.location.pathname.indexOf('/products/lisinha') !== 0) return;
 
-    /* Click em qualquer bar → atualiza preço pelo índice (0=1un, 1=2un, 2=3un) */
+    /* Click em qualquer bar → atualiza preço, substitui no carrinho e abre checkout */
     document.addEventListener('click', function (e) {
       var bar = e.target.closest('.kaching-bundles__bar');
       if (!bar) return;
+
       var allBars = document.querySelectorAll('.kaching-bundles__bar');
-      var idx = Array.prototype.indexOf.call(allBars, bar);
-      updateLisinhaNativePrice([1, 2, 3][idx] || 1);
+      var idx     = Array.prototype.indexOf.call(allBars, bar);
+      var qty     = [1, 2, 3][idx] || 1;
+      var price   = LISINHA_BUNDLE[qty];
+      if (!price) return;
+
+      /* 1. Atualiza preço exibido */
+      updateLisinhaNativePrice(qty);
+
+      /* 2. Substitui Lisinha no carrinho (evita duplicar ao clicar vários bars) */
+      for (var _i = cart.length - 1; _i >= 0; _i--) {
+        if (cart[_i].variantId === LISINHA_VARIANT) cart.splice(_i, 1);
+      }
+      var nome = 'Lisinha' + (qty > 1 ? ' (' + qty + ' un.)' : '');
+      var prod = PRODUTOS[LISINHA_VARIANT] || {};
+      cart.push({ variantId: LISINHA_VARIANT, nome: nome, preco: price, qty: 1, img: prod.img || '' });
+      pzAtualizarBadge();
+      pzRenderDrawer();
+
+      /* 3. Abre checkout Dice direto */
+      setTimeout(function () { pzAbrirModal(); }, 80);
     }, true);
 
-    /* MutationObserver: captura preselect do Kaching ao carregar (sem clique do user) */
+    /* MutationObserver: captura preselect do Kaching ao carregar — só atualiza preço */
     var obs = new MutationObserver(function () {
       var selected = document.querySelector('.kaching-bundles__bar--selected');
       if (!selected) return;
       var allBars = document.querySelectorAll('.kaching-bundles__bar');
-      var idx = Array.prototype.indexOf.call(allBars, selected);
+      var idx     = Array.prototype.indexOf.call(allBars, selected);
       updateLisinhaNativePrice([1, 2, 3][idx] || 1);
     });
 
