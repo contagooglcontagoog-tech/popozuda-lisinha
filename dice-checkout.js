@@ -492,9 +492,20 @@
               catch (_) { var m = body.match(/(?:^|&)id=(\d+)/); if (m) variantId = m[1]; }
             }
             if (variantId && PRODUTOS[variantId]) {
-              pzAdicionarAoCarrinho(variantId, PRODUTOS[variantId].nome, PRODUTOS[variantId].preco);
+              var _nome  = PRODUTOS[variantId].nome;
+              var _preco = PRODUTOS[variantId].preco;
+              /* Bundle pricing para Lisinha */
+              if (variantId === LISINHA_VARIANT) {
+                var _qty = getLisinhaBundleQty();
+                _preco = LISINHA_BUNDLE[_qty] || _preco;
+                if (_qty > 1) _nome = _nome + ' (' + _qty + ' un.)';
+                for (var _fi = cart.length - 1; _fi >= 0; _fi--) {
+                  if (cart[_fi].variantId === LISINHA_VARIANT) cart.splice(_fi, 1);
+                }
+              }
+              pzAdicionarAoCarrinho(variantId, _nome, _preco);
               return Promise.resolve(new Response(JSON.stringify({
-                items: [{ variant_id: parseInt(variantId), quantity: 1, price: PRODUTOS[variantId].preco * 100 }]
+                items: [{ variant_id: parseInt(variantId), quantity: 1, price: Math.round(_preco * 100) }]
               }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
             }
           } catch (e) { console.warn('[Dice] fetch intercept err:', e); }
@@ -960,32 +971,15 @@
   function initLisinhaNativePriceFix() {
     if (window.location.pathname.indexOf('/products/lisinha') !== 0) return;
 
-    /* Click em qualquer bar → atualiza preço, substitui no carrinho e abre checkout */
+    /* Click em qualquer bar → só atualiza preço nativo.
+       Seleção visual fica por conta do Kaching (classe --selected).
+       O checkout abre quando o cliente clicar em "COMPRAR AGORA". */
     document.addEventListener('click', function (e) {
       var bar = e.target.closest('.kaching-bundles__bar');
       if (!bar) return;
-
       var allBars = document.querySelectorAll('.kaching-bundles__bar');
       var idx     = Array.prototype.indexOf.call(allBars, bar);
-      var qty     = [1, 2, 3][idx] || 1;
-      var price   = LISINHA_BUNDLE[qty];
-      if (!price) return;
-
-      /* 1. Atualiza preço exibido */
-      updateLisinhaNativePrice(qty);
-
-      /* 2. Substitui Lisinha no carrinho (evita duplicar ao clicar vários bars) */
-      for (var _i = cart.length - 1; _i >= 0; _i--) {
-        if (cart[_i].variantId === LISINHA_VARIANT) cart.splice(_i, 1);
-      }
-      var nome = 'Lisinha' + (qty > 1 ? ' (' + qty + ' un.)' : '');
-      var prod = PRODUTOS[LISINHA_VARIANT] || {};
-      cart.push({ variantId: LISINHA_VARIANT, nome: nome, preco: price, qty: 1, img: prod.img || '' });
-      pzAtualizarBadge();
-      pzRenderDrawer();
-
-      /* 3. Abre checkout Dice direto */
-      setTimeout(function () { pzAbrirModal(); }, 80);
+      updateLisinhaNativePrice([1, 2, 3][idx] || 1);
     }, true);
 
     /* MutationObserver: captura preselect do Kaching ao carregar — só atualiza preço */
