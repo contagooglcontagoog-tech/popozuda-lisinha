@@ -31,7 +31,7 @@
   /* ── Catálogo de variantes → produtos ── */
   var PRODUTOS = {
     '48961856504035': { nome: 'Creme Popozuda',         preco: 119.90, img: 'https://popozuda.com.br/cdn/shop/files/Creme_ef5f5c0e-822b-4207-ab06-fdedad93aa9c.webp' },
-    '48843070963939': { nome: 'Lisinha',                preco: 89.90,  img: 'https://popozuda.com.br/cdn/shop/files/Lisinha_bb9f1b3e-7628-4029-85a3-aab539943ce9.webp' },
+    '48843070963939': { nome: 'Lisinha',                preco: 39.90,  img: 'https://popozuda.com.br/cdn/shop/files/Lisinha_bb9f1b3e-7628-4029-85a3-aab539943ce9.webp' },
     '48843070537955': { nome: 'Spray Popozuda',         preco: 129.90, img: 'https://popozuda.com.br/cdn/shop/files/Spray_5b4488c6-58fa-45a7-9347-2e649b0c80e1.webp' },
     '48843071652067': { nome: 'Body Splash Sedutora',   preco: 69.90,  img: 'https://popozuda.com.br/cdn/shop/files/Sedutora_2a119351-00ba-42dd-8941-ab331e515233.webp' },
     '48997600657635': { nome: 'Combo Popozuda',         preco: 329.90, img: 'https://popozuda.com.br/cdn/shop/files/Creme_ef5f5c0e-822b-4207-ab06-fdedad93aa9c.webp' },
@@ -49,6 +49,10 @@
     'creme-e-spray-popozuda':'48997255151843',
     'creme-spray-e-lisinha': '48997322064099',
   };
+
+  /* ── Preços especiais Lisinha (bundle 1/2/3 unidades) ── */
+  var LISINHA_VARIANT = '48843070963939';
+  var LISINHA_BUNDLE  = { 1: 39.90, 2: 79.90, 3: 119.90 };
 
   var FRETE = 0; /* Popozuda oferece frete grátis */
   var COR   = '#9d123f';
@@ -391,7 +395,15 @@
       e.stopImmediatePropagation();
       var variantId = extractVariantFromForm(form);
       if (variantId && PRODUTOS[variantId]) {
-        pzAdicionarAoCarrinho(variantId, PRODUTOS[variantId].nome, PRODUTOS[variantId].preco);
+        var nome  = PRODUTOS[variantId].nome;
+        var preco = PRODUTOS[variantId].preco;
+        /* Bundle pricing para Lisinha */
+        if (variantId === LISINHA_VARIANT) {
+          var qty   = getLisinhaBundleQty();
+          preco = LISINHA_BUNDLE[qty] || preco;
+          if (qty > 1) nome = nome + ' (' + qty + ' un.)';
+        }
+        pzAdicionarAoCarrinho(variantId, nome, preco);
       }
     }, true /* capture — dispara antes do custom element */);
 
@@ -451,6 +463,13 @@
     window.fetch = function (input, init) {
       var url = typeof input === 'string' ? input : (input && input.url) || '';
 
+      /* Bloqueia chamadas à Storefront API do myshopify (kaching bundle busca preços aqui) */
+      if (url && url.indexOf('myshopify.com') !== -1) {
+        return Promise.resolve(new Response(JSON.stringify({}), {
+          status: 200, headers: { 'Content-Type': 'application/json' }
+        }));
+      }
+
       /* Mocka chamadas Shopify que falhariam no clone (CORS / 404) */
       if (url && (SHOPIFY_CART_RE.test(url) || url.indexOf('popozuda.com.br/cart') !== -1)) {
         /* /cart/add com produto nosso: intercepta normalmente */
@@ -490,6 +509,18 @@
       var _url = '';
       xhr.open = function (method, url) { _url = url || ''; return _open.apply(xhr, arguments); };
       xhr.send = function () {
+        if (_url && _url.indexOf('myshopify.com') !== -1) {
+          var self = xhr;
+          setTimeout(function () {
+            Object.defineProperty(self, 'readyState',   { get: function () { return 4; }, configurable: true });
+            Object.defineProperty(self, 'status',       { get: function () { return 200; }, configurable: true });
+            Object.defineProperty(self, 'responseText', { get: function () { return '{}'; }, configurable: true });
+            if (typeof self.onreadystatechange === 'function') self.onreadystatechange();
+            self.dispatchEvent(new Event('readystatechange'));
+            self.dispatchEvent(new Event('load'));
+          }, 0);
+          return;
+        }
         if (_url && (SHOPIFY_CART_RE.test(_url) || _url.indexOf('popozuda.com.br/cart') !== -1)) {
           var self = xhr;
           setTimeout(function () {
@@ -854,6 +885,89 @@
     });
   }
 
+  /* ── Lisinha: lê qty selecionada no kaching bundle ── */
+  function getLisinhaBundleQty() {
+    /* Tenta ler o radio selecionado */
+    var bars = document.querySelectorAll('.kaching-bundles__bar');
+    for (var i = 0; i < bars.length; i++) {
+      var radio = bars[i].querySelector('input[type="radio"]');
+      if (radio && radio.checked) {
+        var title = (bars[i].querySelector('.kaching-bundles__bar-title') || {}).textContent || '';
+        var n = parseInt(title);
+        if (n >= 1 && n <= 3) return n;
+      }
+    }
+    /* Fallback: input[name=quantity] no formulário */
+    var qtyEl = document.querySelector('form[data-type="add-to-cart-form"] input[name="quantity"]');
+    return parseInt((qtyEl && qtyEl.value) || '1') || 1;
+  }
+
+  /* ── Lisinha: sobrescreve preços exibidos no kaching bundle ── */
+  function fixLisinhaBundlePrices() {
+    if (window.location.pathname.indexOf('/products/lisinha') !== 0) return;
+    var bars = document.querySelectorAll('.kaching-bundles__bar');
+    if (!bars.length) return;
+    var prices = [
+      { price: 'R$ 39,90' },
+      { price: 'R$ 79,90' },
+      { price: 'R$ 119,90' },
+    ];
+    bars.forEach(function (bar, i) {
+      var d = prices[i];
+      if (!d) return;
+      /* Preço principal */
+      var priceEl = bar.querySelector('[data-a11y-label="system.price"]');
+      if (priceEl) {
+        var tn = priceEl.firstChild;
+        if (tn && tn.nodeType === 3) tn.textContent = d.price;
+        else priceEl.insertBefore(document.createTextNode(d.price), priceEl.firstChild);
+      }
+      /* Remove preço riscado (de original da Shopify) */
+      var origEl = bar.querySelector('[data-a11y-label="system.original_price"]');
+      if (origEl) origEl.style.display = 'none';
+    });
+  }
+
+  /* ── Lisinha: sincroniza preço nativo com bundle selecionado ── */
+  function updateLisinhaNativePrice(qty) {
+    var price = LISINHA_BUNDLE[qty];
+    if (!price) return;
+    document.querySelectorAll('.product-price-block .price').forEach(function (el) {
+      el.textContent = fmt(price);
+    });
+  }
+
+  function initLisinhaNativePriceFix() {
+    if (window.location.pathname.indexOf('/products/lisinha') !== 0) return;
+
+    /* Click em qualquer bar → atualiza preço pelo índice (0=1un, 1=2un, 2=3un) */
+    document.addEventListener('click', function (e) {
+      var bar = e.target.closest('.kaching-bundles__bar');
+      if (!bar) return;
+      var allBars = document.querySelectorAll('.kaching-bundles__bar');
+      var idx = Array.prototype.indexOf.call(allBars, bar);
+      updateLisinhaNativePrice([1, 2, 3][idx] || 1);
+    }, true);
+
+    /* MutationObserver: captura preselect do Kaching ao carregar (sem clique do user) */
+    var obs = new MutationObserver(function () {
+      var selected = document.querySelector('.kaching-bundles__bar--selected');
+      if (!selected) return;
+      var allBars = document.querySelectorAll('.kaching-bundles__bar');
+      var idx = Array.prototype.indexOf.call(allBars, selected);
+      updateLisinhaNativePrice([1, 2, 3][idx] || 1);
+    });
+
+    /* Aguarda o bloco kaching aparecer no DOM para começar a observar */
+    var pollObs = setInterval(function () {
+      var block = document.querySelector('.kaching-bundles');
+      if (!block) return;
+      clearInterval(pollObs);
+      obs.observe(block, { attributes: true, attributeFilter: ['class'], subtree: true });
+    }, 200);
+    setTimeout(function () { clearInterval(pollObs); }, 15000);
+  }
+
   /* ── Polyfills Shopify ── */
   function fixShopifyComponents() {
     /* 0. Forçar carregamento de imagens com loading="lazy" (abaixo da dobra nunca disparam load) */
@@ -1144,6 +1258,18 @@
       bindMasks();
       fixShopifyComponents();
       initKitBuilder();
+
+      /* Lisinha: corrige preços exibidos pelo kaching bundle (que re-renderiza via Storefront API) */
+      fixLisinhaBundlePrices();
+      setTimeout(fixLisinhaBundlePrices, 600);
+      setTimeout(fixLisinhaBundlePrices, 1800);
+      setTimeout(fixLisinhaBundlePrices, 4000);
+      var _kEl = document.querySelector('kaching-bundle') || document.body;
+      var _kObs = new MutationObserver(function () { fixLisinhaBundlePrices(); });
+      _kObs.observe(_kEl, { childList: true, subtree: true });
+
+      /* Lisinha: sincroniza preço nativo ao trocar bundle */
+      initLisinhaNativePriceFix();
     };
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', ready);
