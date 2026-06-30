@@ -2470,6 +2470,45 @@
     transition-duration: 1ms;
     transition-behavior: allow-discrete;
   }
+
+  /* ── Mobile global fixes ── */
+  html, body { max-width: 100%; overflow-x: hidden; }
+
+  @media (max-width: 767px) {
+    /* impede elementos largos de causar scroll horizontal */
+    .page-width, .section-full-width { overflow-x: hidden; }
+
+    /* hero / banner: garante que imagens não extrapolam */
+    .banner, .banner__media, .hero, [class*="hero"] {
+      width: 100% !important;
+      max-width: 100vw;
+    }
+
+    /* carrossel de produtos: cartões com tamanho mínimo funcional */
+    .product-card { min-width: 140px; }
+
+    /* botões de compra rápida: touch targets adequados */
+    .quick-add button, .btn, button[name="add"] {
+      min-height: 44px;
+      touch-action: manipulation;
+    }
+
+    /* kit builder: inputs e selects com font-size 16px (evita zoom no iOS) */
+    select, input, textarea {
+      font-size: 16px !important;
+    }
+
+    /* header: garante visibilidade dos ícones no mobile */
+    .header__icons--left, .header__icons--right { gap: 4px; }
+  }
+
+  @media (max-width: 480px) {
+    /* padding menor nas seções em telas pequenas */
+    .shopify-section { padding-left: 0; padding-right: 0; }
+
+    /* texto de destaque não sobrepõe imagens em telas tiny */
+    .banner__content { padding: 16px !important; }
+  }
 </style>
 <link href="https://popozuda.com.br/cdn/shop/t/4/assets/theme.css" media="all" rel="stylesheet" type="text/css"/>
 <link href="https://popozuda.com.br/cdn/shop/t/4/assets/photoswipe.css" media="all" onload="this.media='all'" rel="stylesheet"/>
@@ -2478,7 +2517,7 @@
 <link href="https://popozuda.com.br/cdn/shop/t/4/assets/header-menu.css" media="all" onload="this.media='all'" rel="stylesheet"/>
 <meta charset="utf-8"/>
 <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
-<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
 <meta content="same-origin" name="view-transition"/>
 <meta content="" name="theme-color"/>
 <meta content="Popozuda" property="og:site_name"/>
