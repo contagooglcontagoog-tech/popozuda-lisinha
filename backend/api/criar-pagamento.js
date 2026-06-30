@@ -54,7 +54,7 @@ module.exports = async function handler(req, res) {
     return res.json({
       ok:           true,
       qr_code_text: data.qr_code_text,
-      payment_id:   data.id || data.payment_id || null,
+      payment_id:   data.transaction_id || data.id || data.payment_id || null,
       expires_at:   data.expires_at || null
     });
 

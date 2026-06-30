@@ -26,10 +26,10 @@ module.exports = async function handler(req, res) {
   try {
     const token = await getDiceToken();
     const { data } = await axios.get(
-      `${DICE_URL}/api/v2/payments/deposit/${id}`,
+      `${DICE_URL}/api/v1/transactions/getStatusTransac/${id}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
-    return res.json({ ok: true, status: data.status || data.state || 'PENDING' });
+    return res.json({ ok: true, status: (data.status || data.data?.status || 'PENDING').toUpperCase() });
   } catch (err) {
     if (err.response?.status === 401) { _token = null; _expiry = 0; }
     return res.status(500).json({ ok: false, erro: err.message });
