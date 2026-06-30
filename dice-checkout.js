@@ -415,28 +415,68 @@
 
     /* — Estratégia 3: override fetch como camada extra — */
     var origFetch = window.fetch;
+    var SHOPIFY_CART_RE = /\/(cart)(\/add|\/change|\/update|\/clear|\.js|\/sections)(\.js)?(\?|$)/;
+
     window.fetch = function (input, init) {
       var url = typeof input === 'string' ? input : (input && input.url) || '';
-      if (url && (url.indexOf('/cart/add') !== -1)) {
-        try {
-          var body = init && init.body;
-          var variantId = null;
-          if (body instanceof FormData) {
-            variantId = String(body.get('id') || body.get('variant_id') || '');
-          } else if (typeof body === 'string') {
-            try { var p = JSON.parse(body); variantId = String(p.id || p.variant_id || ''); }
-            catch (_) { var m = body.match(/(?:^|&)id=(\d+)/); if (m) variantId = m[1]; }
-          }
-          if (variantId && PRODUTOS[variantId]) {
-            pzAdicionarAoCarrinho(variantId, PRODUTOS[variantId].nome, PRODUTOS[variantId].preco);
-            return Promise.resolve(new Response(JSON.stringify({
-              items: [{ variant_id: parseInt(variantId), quantity: 1, price: PRODUTOS[variantId].preco * 100 }]
-            }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
-          }
-        } catch (e) { console.warn('[Dice] fetch intercept err:', e); }
+
+      /* Mocka chamadas Shopify que falhariam no clone (CORS / 404) */
+      if (url && (SHOPIFY_CART_RE.test(url) || url.indexOf('popozuda.com.br/cart') !== -1)) {
+        /* /cart/add com produto nosso: intercepta normalmente */
+        if (url.indexOf('/cart/add') !== -1) {
+          try {
+            var body = init && init.body;
+            var variantId = null;
+            if (body instanceof FormData) {
+              variantId = String(body.get('id') || body.get('variant_id') || '');
+            } else if (typeof body === 'string') {
+              try { var p = JSON.parse(body); variantId = String(p.id || p.variant_id || ''); }
+              catch (_) { var m = body.match(/(?:^|&)id=(\d+)/); if (m) variantId = m[1]; }
+            }
+            if (variantId && PRODUTOS[variantId]) {
+              pzAdicionarAoCarrinho(variantId, PRODUTOS[variantId].nome, PRODUTOS[variantId].preco);
+              return Promise.resolve(new Response(JSON.stringify({
+                items: [{ variant_id: parseInt(variantId), quantity: 1, price: PRODUTOS[variantId].preco * 100 }]
+              }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+            }
+          } catch (e) { console.warn('[Dice] fetch intercept err:', e); }
+        }
+        /* Todas as outras chamadas /cart/* → retorna carrinho vazio silenciosamente */
+        return Promise.resolve(new Response(JSON.stringify({
+          token: '', note: '', attributes: {}, total_price: 0, item_count: 0, items: [], sections: {}
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
+
       return origFetch.apply(this, arguments);
     };
+
+    /* Mesma proteção para XMLHttpRequest (alguns temas Shopify ainda usam XHR) */
+    var OrigXHR = window.XMLHttpRequest;
+    function PzXHR() {
+      var xhr = new OrigXHR();
+      var _open = xhr.open.bind(xhr);
+      var _send = xhr.send.bind(xhr);
+      var _url = '';
+      xhr.open = function (method, url) { _url = url || ''; return _open.apply(xhr, arguments); };
+      xhr.send = function () {
+        if (_url && (SHOPIFY_CART_RE.test(_url) || _url.indexOf('popozuda.com.br/cart') !== -1)) {
+          var self = xhr;
+          setTimeout(function () {
+            Object.defineProperty(self, 'readyState',  { get: function () { return 4; }, configurable: true });
+            Object.defineProperty(self, 'status',      { get: function () { return 200; }, configurable: true });
+            Object.defineProperty(self, 'responseText',{ get: function () { return '{"items":[],"item_count":0,"total_price":0,"sections":{}}'; }, configurable: true });
+            if (typeof self.onreadystatechange === 'function') self.onreadystatechange();
+            self.dispatchEvent(new Event('readystatechange'));
+            self.dispatchEvent(new Event('load'));
+          }, 0);
+          return;
+        }
+        return _send.apply(xhr, arguments);
+      };
+      return xhr;
+    }
+    PzXHR.prototype = OrigXHR.prototype;
+    window.XMLHttpRequest = PzXHR;
   }
 
   /* ── Funções de Cart ── */
@@ -450,7 +490,12 @@
     }
     pzAtualizarBadge();
     pzRenderDrawer();
-    pzAbrirDrawer();
+    /* Página de produto: abre checkout direto sem passar pelo drawer */
+    if (window.location.pathname.indexOf('/products/') === 0) {
+      pzAbrirModal();
+    } else {
+      pzAbrirDrawer();
+    }
   };
 
   function pzAtualizarBadge() {
@@ -891,6 +936,42 @@
       mc.style.opacity = '1';
       mc.style.transform = 'none';
       mc.style.willChange = 'auto';
+    });
+
+    /* 8. media-gallery: ativa thumbnails e imagem principal quando custom element não carrega */
+    document.querySelectorAll('media-gallery').forEach(function (gallery) {
+      /* Força a primeira imagem a aparecer */
+      var firstSlide = gallery.querySelector('[data-index="0"]') || gallery.querySelector('.product__media-item');
+      if (firstSlide) firstSlide.classList.add('is-active');
+
+      /* Thumbnails: clicar troca a imagem principal */
+      gallery.querySelectorAll('[data-thumbnail-id]').forEach(function (thumb) {
+        thumb.style.cursor = 'pointer';
+        thumb.addEventListener('click', function () {
+          var id = thumb.getAttribute('data-thumbnail-id');
+          gallery.querySelectorAll('.product__media-item').forEach(function (slide) {
+            slide.classList.toggle('is-active', slide.getAttribute('data-media-id') === id);
+          });
+          gallery.querySelectorAll('[data-thumbnail-id]').forEach(function (t) {
+            t.classList.toggle('media-gallery__thumbnail--active', t === thumb);
+          });
+        });
+      });
+
+      /* Garante imagens visíveis */
+      gallery.querySelectorAll('img').forEach(function (img) {
+        img.loading = 'eager';
+        img.classList.remove('loading');
+        img.classList.add('loaded');
+      });
+    });
+
+    /* 9. variant-picker / quantity-selector: evita erros JS de custom elements não definidos */
+    ['variant-picker', 'quantity-selector', 'product-form', 'cart-notification', 'cart-items',
+     'sticky-header', 'announcement-bar', 'details-modal', 'product-recommendations'].forEach(function (tag) {
+      if (!customElements.get(tag)) {
+        customElements.define(tag, HTMLElement);
+      }
     });
   }
 
