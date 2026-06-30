@@ -427,8 +427,13 @@
       if (link) {
         var href = link.getAttribute('href') || '';
 
-        /* intercepta /products/slug — "Comprar agora" nos banners */
+        /* intercepta /products/slug — "Comprar agora" nos banners
+           Links de card de produto (imagem, título, overlay) navegam normalmente */
         if (href.indexOf('/products/') === 0) {
+          var refAttr = link.getAttribute('ref') || '';
+          var isCardNavLink = refAttr === 'productCardLink' || refAttr === 'cardGalleryLink' || refAttr === 'productTitleLink'
+                              || !!link.closest('product-card');
+          if (isCardNavLink) return;
           e.preventDefault();
           e.stopImmediatePropagation();
           /* extrai variantId da URL ou via slug map */
