@@ -906,19 +906,31 @@
 
   /* ── Lisinha: lê qty selecionada no kaching bundle ── */
   function getLisinhaBundleQty() {
-    /* Tenta ler o radio selecionado */
-    var bars = document.querySelectorAll('.kaching-bundles__bar');
-    for (var i = 0; i < bars.length; i++) {
-      var radio = bars[i].querySelector('input[type="radio"]');
-      if (radio && radio.checked) {
-        var title = (bars[i].querySelector('.kaching-bundles__bar-title') || {}).textContent || '';
-        var n = parseInt(title);
-        if (n >= 1 && n <= 3) return n;
-      }
+    /* No clone estático o radio nunca tem checked — usa --selected class */
+    var selected = document.querySelector('.kaching-bundles__bar--selected');
+    if (selected) {
+      var title = (selected.querySelector('.kaching-bundles__bar-title') || {}).textContent || '';
+      var n = parseInt(title);
+      if (n >= 1 && n <= 10) return n;
     }
     /* Fallback: input[name=quantity] no formulário */
     var qtyEl = document.querySelector('form[data-type="add-to-cart-form"] input[name="quantity"]');
     return parseInt((qtyEl && qtyEl.value) || '1') || 1;
+  }
+
+  /* ── Lisinha: ativa --selected ao clicar nas barras (clone estático não tem JS Kaching) ── */
+  function bindKachingBars() {
+    if (window.location.pathname.indexOf('/products/lisinha') !== 0) return;
+    document.addEventListener('click', function (e) {
+      var bar = e.target.closest('.kaching-bundles__bar');
+      if (!bar) return;
+      document.querySelectorAll('.kaching-bundles__bar').forEach(function (b) {
+        b.classList.remove('kaching-bundles__bar--selected');
+      });
+      bar.classList.add('kaching-bundles__bar--selected');
+      /* Atualiza preço exibido no botão de compra */
+      fixLisinhaBundlePrices();
+    });
   }
 
   /* ── Lisinha: sobrescreve preços exibidos no kaching bundle ── */
@@ -1303,6 +1315,9 @@
 
       /* Lisinha: sincroniza preço nativo ao trocar bundle */
       initLisinhaNativePriceFix();
+
+      /* Lisinha: ativa seleção de barra no clone estático */
+      bindKachingBars();
     };
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', ready);
