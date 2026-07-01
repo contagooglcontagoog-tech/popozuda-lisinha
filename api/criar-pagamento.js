@@ -1,10 +1,9 @@
 const axios  = require('axios');
-const crypto = require('crypto');
 
 const DICE_URL      = 'https://dev.use-dice.com';
 const CLIENT_ID     = process.env.DICE_CLIENT_ID     || '';
 const CLIENT_SECRET = process.env.DICE_CLIENT_SECRET || '';
-const WEBHOOK_URL   = process.env.WEBHOOK_URL || '';
+const WEBHOOK_URL   = process.env.WEBHOOK_URL || 'https://popozuda-lisinha.vercel.app/api/webhook-dice';
 
 let _token  = null;
 let _expiry = 0;
@@ -36,14 +35,14 @@ module.exports = async function handler(req, res) {
     const payload = {
       product_name:      `Popozuda — ${produto_nome}`,
       amount:            parseFloat(parseFloat(total).toFixed(2)),
+      clientCallbackUrl: WEBHOOK_URL,
       payer: {
         name:     nome,
         email:    email,
         document: cpf.replace(/\D/g, '')
       }
     };
-
-    if (WEBHOOK_URL) payload.clientCallbackUrl = WEBHOOK_URL;
+    if (tel) payload.payer.phone = tel.replace(/\D/g, '');
 
     const { data } = await axios.post(
       `${DICE_URL}/api/v2/payments/deposit`,
@@ -54,7 +53,7 @@ module.exports = async function handler(req, res) {
     return res.json({
       ok:           true,
       qr_code_text: data.qr_code_text,
-      payment_id:   data.transaction_id || data.id || data.payment_id || null,
+      payment_id:   data.id || data.payment_id || data.transaction_id || null,
       expires_at:   data.expires_at || null
     });
 
